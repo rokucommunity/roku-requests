@@ -36,6 +36,7 @@ function Requests_request(method, url as String, args as Object)
     _retryCount = 3
     ' _allow_redirects = true
     _verify = "common:/certs/ca-bundle.crt"
+    _cacheSeconds = invalid
 
     if args <> invalid and type(args) = "roAssociativeArray"
         if args.params <> invalid and type(args.params) = "roAssociativeArray"
@@ -58,6 +59,9 @@ function Requests_request(method, url as String, args as Object)
         end if
         if args.verify <> invalid and (type(args.verify) = "String" or type(args.verify) = "roString")
             _verify = args.verify
+        end if
+        if args.cacheSeconds <> invalid and (type(args.cacheSeconds) = "Integer" or type(args.cacheSeconds) = "roInteger")
+            _cacheSeconds = args.cacheSeconds
         end if
     end if
 
@@ -104,15 +108,38 @@ function Requests_request(method, url as String, args as Object)
     'urlTransfer.AddCookies(cookies)
     'urlTransfer.ClearCookies()
 
-    urlTransfer = RequestsUrlTransfer(true, true, _verify)
-    urlTransfer.setUrl(requestQueryString.append(url))
-    urlTransfer.SetHeaders(requestHeaders._headers)
+    url = requestQueryString.append(url)
+    headers = requestHeaders._headers
+
+    rc = Requests_cache(method, url, headers)
+
+    response = invalid
+    if _cacheSeconds <> invalid
+        response = rc.get(_cacheSeconds)
+    end if
+
+    if response = invalid
+        response = Requests_run(method, url, headers, data, _timeout, _retryCount, _verify)
+        if rc <> invalid and _cacheSeconds <> invalid
+            rc.put(response)
+        end if
+    end if
+
+    return response
+
+end function
+
+function Requests_run(method, url, headers, data, timeout, retryCount, verify)
+
+    urlTransfer = RequestsUrlTransfer(true, true, verify)
+    urlTransfer.setUrl(url)
+    urlTransfer.SetHeaders(headers)
 
     ? "[http] ------ START HTTP REQUEST ------"
 
     ? "[http] URL:", urlTransfer.GetURL()
 
-    ? "[http] Timeout= ", _timeout
+    ? "[http] Timeout= ", timeout
 
     cancel_and_return = false
 
@@ -121,10 +148,10 @@ function Requests_request(method, url as String, args as Object)
         timesTried : 0,
     }
     'while we still have try times
-    while _retryCount >= 0
+    while retryCount >= 0
 
         'deincrement the number of retries
-        _retryCount = _retryCount - 1
+        retryCount = retryCount - 1
         requestDetails.timesTried = requestDetails.timesTried + 1
 
         ? "[http] Method: " +  method
@@ -142,7 +169,7 @@ function Requests_request(method, url as String, args as Object)
 
         if sent = true
             clock = CreateObject("roTimespan")
-            timeout_call = clock.TotalMilliseconds() + _timeout
+            timeout_call = clock.TotalMilliseconds() + timeout
 
             while true and cancel_and_return = false
 
@@ -173,7 +200,7 @@ function Requests_request(method, url as String, args as Object)
                 else
                     'We have a bad response
                     ? "[http] Bad response", responseCode
-                    ? "[http] Will Retry ", _retryCount
+                    ? "[http] Will Retry ", retryCount
                 end if
             else
                 if m.cancel_and_return = true
@@ -184,8 +211,8 @@ function Requests_request(method, url as String, args as Object)
                     ? "[http] Event Timed Out"
                     m.urlTransfer.AsyncCancel()
                     'Exponential backoff timeouts
-                    _timeout = _timeout * 2
-                    ? "[http] Timeout=", _timeout
+                    timeout = timeout * 2
+                    ? "[http] Timeout=", timeout
                 end if
             end if
         end if
@@ -193,7 +220,6 @@ function Requests_request(method, url as String, args as Object)
     ? "[http] ------ END HTTP REQUEST ------"
 
     return Requests_response(urlTransfer, responseEvent, requestDetails)
-
 
 end function
 

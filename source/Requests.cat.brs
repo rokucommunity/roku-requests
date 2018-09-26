@@ -41,6 +41,7 @@ function Requests_request(method, url as String, args as Object)
     _timeout = 30000
     _retryCount = 3
     _verify = "common:/certs/ca-bundle.crt"
+    _cacheSeconds = invalid
     if args <> invalid and type(args) = "roAssociativeArray"
         if args.params <> invalid and type(args.params) = "roAssociativeArray"
             _params = args.params
@@ -63,6 +64,9 @@ function Requests_request(method, url as String, args as Object)
         if args.verify <> invalid and (type(args.verify) = "String" or type(args.verify) = "roString")
             _verify = args.verify
         end if
+        if args.cacheSeconds <> invalid and (type(args.cacheSeconds) = "Integer" or type(args.cacheSeconds) = "roInteger")
+            _cacheSeconds = args.cacheSeconds
+        end if
     end if
     requestHeaders = Requests_headers()
     requestHeaders.addHeadersAA(_headers)
@@ -76,19 +80,35 @@ function Requests_request(method, url as String, args as Object)
     else
         data = ""
     end if
-    urlTransfer = RequestsUrlTransfer(true, true, _verify)
-    urlTransfer.setUrl(requestQueryString.append(url))
-    urlTransfer.SetHeaders(requestHeaders._headers)
+    url = requestQueryString.append(url)
+    headers = requestHeaders._headers
+    rc = Requests_cache(method, url, headers)
+    response = invalid
+    if _cacheSeconds <> invalid
+        response = rc.get(_cacheSeconds)
+    end if
+    if response = invalid
+        response = Requests_run(method, url, headers, data, _timeout, _retryCount, _verify)
+        if rc <> invalid and _cacheSeconds <> invalid
+            rc.put(response)
+        end if
+    end if
+    return response
+end function
+function Requests_run(method, url, headers, data, timeout, retryCount, verify)
+    urlTransfer = RequestsUrlTransfer(true, true, verify)
+    urlTransfer.setUrl(url)
+    urlTransfer.SetHeaders(headers)
     ? "[http] ------ START HTTP REQUEST ------"
     ? "[http] URL:", urlTransfer.GetURL()
-    ? "[http] Timeout= ", _timeout
+    ? "[http] Timeout= ", timeout
     cancel_and_return = false
     responseEvent = invalid
     requestDetails = {
         timesTried : 0,
     }
-    while _retryCount >= 0
-        _retryCount = _retryCount - 1
+    while retryCount >= 0
+        retryCount = retryCount - 1
         requestDetails.timesTried = requestDetails.timesTried + 1
         ? "[http] Method: " +  method
         if method="POST"
@@ -103,7 +123,7 @@ function Requests_request(method, url as String, args as Object)
         end if
         if sent = true
             clock = CreateObject("roTimespan")
-            timeout_call = clock.TotalMilliseconds() + _timeout
+            timeout_call = clock.TotalMilliseconds() + timeout
             while true and cancel_and_return = false
                 if m.top <> invalid
                     if m.top.quit <> invalid
@@ -126,7 +146,7 @@ function Requests_request(method, url as String, args as Object)
                     exit while
                 else
                     ? "[http] Bad response", responseCode
-                    ? "[http] Will Retry ", _retryCount
+                    ? "[http] Will Retry ", retryCount
                 end if
             else
                 if m.cancel_and_return = true
@@ -135,14 +155,74 @@ function Requests_request(method, url as String, args as Object)
                 else
                     ? "[http] Event Timed Out"
                     m.urlTransfer.AsyncCancel()
-                    _timeout = _timeout * 2
-                    ? "[http] Timeout=", _timeout
+                    timeout = timeout * 2
+                    ? "[http] Timeout=", timeout
                 end if
             end if
         end if
     end while
     ? "[http] ------ END HTTP REQUEST ------"
     return Requests_response(urlTransfer, responseEvent, requestDetails)
+end function
+function Requests_cache(method as String, url as String, headers as Object)
+    if method <> "GET"
+        return invalid
+    end if
+    cacheKey = url
+    headersString = FormatJson(headers)
+    if headersString <> invalid
+        cacheKey = cacheKey + headersString
+    end if
+    ba = CreateObject("roByteArray")
+    ba.FromAsciiString(cacheKey)
+    digest = CreateObject("roEVPDigest")
+    digest.Setup("md5")
+    md5Key = digest.Process(ba)
+    fileLocation = "cachefs:/" + md5Key
+    return {
+        _cacheKey: cacheKey
+        _md5Key: md5Key
+        location: fileLocation
+        exists: function() as Boolean
+                fs = CreateObject("roFileSystem")
+                return fs.Exists(m.location)
+            end function
+        get: function(expireSeconds) as Object
+                if m.exists()
+                    fileData = ReadAsciiFile(m.location)
+                    if fileData <> ""
+                        dataSplit = fileData.Split(chr(10))
+                        if dataSplit.count() = 2
+                            fileTimeastamp = dataSplit[0].toInt()
+                            date = CreateObject("roDateTime")
+                            nowTimestamp = date.AsSeconds()
+                            if fileTimeastamp + expireSeconds >= nowTimestamp
+                                parsedJson = ParseJson(dataSplit[1])
+                                if parsedJson <> invalid
+                                    return parsedJson
+                                end if
+                            end if
+                        end if
+                    end if
+                end if
+                return invalid
+            end function
+        put: function(response) as Boolean
+                date = CreateObject("roDateTime")
+                timestamp = date.AsSeconds()
+                putString = stri(timestamp) + chr(10)
+                jsonResponse = FormatJson(response)
+                if jsonResponse <> invalid
+                    putString = putString + jsonResponse
+                    return WriteAsciiFile(m.location, putString)
+                end if
+                return false
+            end function
+        delete: function() as Boolean
+            fs = CreateObject("roFileSystem")
+                return fs.Delete(m.location)
+            end function
+    }
 end function
 function Requests_headers()
     return {
@@ -228,15 +308,9 @@ function Requests_queryString()
 end function
 function Requests_response(urlTransfer as Object, responseEvent as Object, requestDetails as Object)
     rr = {}
-    rr.ok = function()
-            if m.responseCode > 0 and m.responseCode < 400
-                return true
-            else
-                return false
-            end if
-        end function
     rr.timesTried = requestDetails.timesTried
     rr.url = urlTransfer.GetUrl()
+    rr.ok = false
     if responseEvent <> invalid
         rr.statusCode = responseEvent.GetResponseCode()
         rr.text = responseEvent.GetString()
@@ -245,6 +319,9 @@ function Requests_response(urlTransfer as Object, responseEvent as Object, reque
         rr.GetSourceIdentity = responseEvent.GetSourceIdentity()
         rr.GetFailureReason = responseEvent.GetFailureReason()
         rr.target_ip = responseEvent.GetTargetIpAddress()
+        if rr.statusCode > 0 and rr.statusCode < 400
+            rr.ok = true
+        end if
     end if
     if rr.text <> invalid
         rr.json = parseJson(rr.text)
