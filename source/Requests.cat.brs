@@ -41,6 +41,7 @@ function Requests_request(method, url as String, args as Object)
     _timeout = 30000
     _retryCount = 3
     _verify = "common:/certs/ca-bundle.crt"
+    _useCache = true
     _cacheSeconds = invalid
     if args <> invalid and type(args) = "roAssociativeArray"
         if args.params <> invalid and type(args.params) = "roAssociativeArray"
@@ -64,6 +65,9 @@ function Requests_request(method, url as String, args as Object)
         if args.verify <> invalid and (type(args.verify) = "String" or type(args.verify) = "roString")
             _verify = args.verify
         end if
+        if args.useCache <> invalid and type(args.useCache) = "Boolean"
+            _useCache = args.useCache
+        end if
         if args.cacheSeconds <> invalid and (type(args.cacheSeconds) = "Integer" or type(args.cacheSeconds) = "roInteger")
             _cacheSeconds = args.cacheSeconds
         end if
@@ -84,12 +88,12 @@ function Requests_request(method, url as String, args as Object)
     headers = requestHeaders._headers
     rc = Requests_cache(method, url, headers)
     response = invalid
-    if _cacheSeconds <> invalid
+    if _useCache <> invalid
         response = rc.get(_cacheSeconds)
     end if
     if response = invalid
         response = Requests_run(method, url, headers, data, _timeout, _retryCount, _verify)
-        if rc <> invalid and _cacheSeconds <> invalid
+        if rc <> invalid and _useCache <> invalid
             rc.put(response)
         end if
     end if
@@ -102,6 +106,7 @@ function Requests_run(method, url, headers, data, timeout, retryCount, verify)
     ? "[http] ------ START HTTP REQUEST ------"
     ? "[http] URL:", urlTransfer.GetURL()
     ? "[http] Timeout= ", timeout
+    ? "[http] Headers: ",  headers
     cancel_and_return = false
     responseEvent = invalid
     requestDetails = {
@@ -110,7 +115,7 @@ function Requests_run(method, url, headers, data, timeout, retryCount, verify)
     while retryCount >= 0
         retryCount = retryCount - 1
         requestDetails.timesTried = requestDetails.timesTried + 1
-        ? "[http] Method: " +  method
+        ? "[http] Method: ",  method
         if method="POST"
             sent = urlTransfer.AsyncPostFromString(data)
         else if method = "GET"
@@ -196,10 +201,25 @@ function Requests_cache(method as String, url as String, headers as Object)
                             fileTimeastamp = dataSplit[0].toInt()
                             date = CreateObject("roDateTime")
                             nowTimestamp = date.AsSeconds()
-                            if fileTimeastamp + expireSeconds >= nowTimestamp
-                                parsedJson = ParseJson(dataSplit[1])
-                                if parsedJson <> invalid
-                                    return parsedJson
+                            response = ParseJson(dataSplit[1])
+                            if response <> invalid
+                                if expireSeconds = invalid
+                                    cacheControl = response.headers["cache-control"]
+                                    if cacheControl <> invalid
+                                        cacheControlSplit = cacheControl.split(",")
+                                        if cacheControlSplit.count() > 1
+                                            cacheControlMaxAgeSplit = cacheControlSplit[1].split("=")
+                                            if cacheControlMaxAgeSplit.count() > 1
+                                                expireSeconds = val(cacheControlMaxAgeSplit[1])
+                                            end if
+                                        end if
+                                    end if
+                                end if
+                                if expireSeconds <> invalid
+                                    if fileTimeastamp + expireSeconds >= nowTimestamp
+                                        response.cacheHit = true
+                                        return response
+                                    end if
                                 end if
                             end if
                         end if
@@ -311,6 +331,7 @@ function Requests_response(urlTransfer as Object, responseEvent as Object, reque
     rr.timesTried = requestDetails.timesTried
     rr.url = urlTransfer.GetUrl()
     rr.ok = false
+    rr.cacheHit = false
     if responseEvent <> invalid
         rr.statusCode = responseEvent.GetResponseCode()
         rr.text = responseEvent.GetString()

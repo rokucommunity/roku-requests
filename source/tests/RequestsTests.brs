@@ -109,5 +109,23 @@ function Atst__post_json_data(jsonData) as void
 
 end function
 
+'@Only
+'@Test Requests Cache write, read with Cache-Contol headers
+function Atst__Test_Requests_cache_read_headers() as void
+    url = "http://httpbin.org/cache/100"
+
+    cache = Requests_cache("GET", url, {})
+    cache.delete()
+
+    response = Requests().get(url, {useCache: true})
+    m.AssertNotInvalid(response.json)
+    m.AssertFalse(response.cacheHit)
+
+    response = Requests().get("http://httpbin.org/cache/100", {useCache: true})
+    m.AssertNotInvalid(response.json)
+    m.AssertTrue(response.cacheHit)
+
+end function
+
 
 

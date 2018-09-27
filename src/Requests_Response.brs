@@ -5,6 +5,7 @@ function Requests_response(urlTransfer as Object, responseEvent as Object, reque
     rr.timesTried = requestDetails.timesTried
     rr.url = urlTransfer.GetUrl()
     rr.ok = false
+    rr.cacheHit = false
 
     if responseEvent <> invalid
         rr.statusCode = responseEvent.GetResponseCode()

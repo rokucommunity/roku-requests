@@ -36,6 +36,7 @@ function Requests_request(method, url as String, args as Object)
     _retryCount = 3
     ' _allow_redirects = true
     _verify = "common:/certs/ca-bundle.crt"
+    _useCache = true
     _cacheSeconds = invalid
 
     if args <> invalid and type(args) = "roAssociativeArray"
@@ -60,6 +61,9 @@ function Requests_request(method, url as String, args as Object)
         if args.verify <> invalid and (type(args.verify) = "String" or type(args.verify) = "roString")
             _verify = args.verify
         end if
+        if args.useCache <> invalid and type(args.useCache) = "Boolean"
+            _useCache = args.useCache
+        end if
         if args.cacheSeconds <> invalid and (type(args.cacheSeconds) = "Integer" or type(args.cacheSeconds) = "roInteger")
             _cacheSeconds = args.cacheSeconds
         end if
@@ -77,10 +81,11 @@ function Requests_request(method, url as String, args as Object)
     '     before giving up, as a float
     ' :param retryCount: (optional) How many times to retry a failed response.
     ' :param allow_redirects: (optional) Boolean. Enable/disable GET/OPTIONS/POST/PUT/PATCH/DELETE/HEAD redirection.
-    ' :type allow_redirects: bool
     ' :param verify: (optional) String to specify SSL cert bundle.
     '               If this is set to empty string `InitClientCertificates` is not called on roUrlTransfer.
     '               Defaults to `common:/certs/ca-bundle.crt`
+    ' :param useCache: (optional) Boolean. Enable/Disable caching. Defaults to true
+    ' :param cacheSeconds: (optional) Integer. Enable/Disable caching. Defaults to response's Cache-Control if it exists
     ' :return: :class:`Requests <Response>` object
     ' Usage::
     '   req = Requests().get('http://httpbin.org/get')
@@ -114,13 +119,13 @@ function Requests_request(method, url as String, args as Object)
     rc = Requests_cache(method, url, headers)
 
     response = invalid
-    if _cacheSeconds <> invalid
+    if _useCache <> invalid
         response = rc.get(_cacheSeconds)
     end if
 
     if response = invalid
         response = Requests_run(method, url, headers, data, _timeout, _retryCount, _verify)
-        if rc <> invalid and _cacheSeconds <> invalid
+        if rc <> invalid and _useCache <> invalid
             rc.put(response)
         end if
     end if
@@ -141,6 +146,8 @@ function Requests_run(method, url, headers, data, timeout, retryCount, verify)
 
     ? "[http] Timeout= ", timeout
 
+    ? "[http] Headers: ",  headers
+
     cancel_and_return = false
 
     responseEvent = invalid
@@ -154,7 +161,7 @@ function Requests_run(method, url, headers, data, timeout, retryCount, verify)
         retryCount = retryCount - 1
         requestDetails.timesTried = requestDetails.timesTried + 1
 
-        ? "[http] Method: " +  method
+        ? "[http] Method: ",  method
         if method="POST"
             sent = urlTransfer.AsyncPostFromString(data)
         else if method = "GET"

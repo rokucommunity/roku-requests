@@ -38,10 +38,25 @@ function Requests_cache(method as String, url as String, headers as Object)
                             fileTimeastamp = dataSplit[0].toInt()
                             date = CreateObject("roDateTime")
                             nowTimestamp = date.AsSeconds()
-                            if fileTimeastamp + expireSeconds >= nowTimestamp
-                                parsedJson = ParseJson(dataSplit[1])
-                                if parsedJson <> invalid
-                                    return parsedJson
+                            response = ParseJson(dataSplit[1])
+                            if response <> invalid
+                                if expireSeconds = invalid
+                                    cacheControl = response.headers["cache-control"]
+                                    if cacheControl <> invalid
+                                        cacheControlSplit = cacheControl.split(",")
+                                        if cacheControlSplit.count() > 1
+                                            cacheControlMaxAgeSplit = cacheControlSplit[1].split("=")
+                                            if cacheControlMaxAgeSplit.count() > 1
+                                                expireSeconds = val(cacheControlMaxAgeSplit[1])
+                                            end if
+                                        end if
+                                    end if
+                                end if
+                                if expireSeconds <> invalid
+                                    if fileTimeastamp + expireSeconds >= nowTimestamp
+                                        response.cacheHit = true
+                                        return response
+                                    end if
                                 end if
                             end if
                         end if
