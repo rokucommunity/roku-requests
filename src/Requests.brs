@@ -61,7 +61,7 @@ function Requests_request(method, url as String, args as Object)
         if args.verify <> invalid and (type(args.verify) = "String" or type(args.verify) = "roString")
             _verify = args.verify
         end if
-        if args.useCache <> invalid and type(args.useCache) = "Boolean"
+        if args.useCache <> invalid and (type(args.useCache) = "Boolean" or type(args.useCache) = "roBoolean")
             _useCache = args.useCache
         end if
         if args.cacheSeconds <> invalid and (type(args.cacheSeconds) = "Integer" or type(args.cacheSeconds) = "roInteger")
@@ -119,13 +119,13 @@ function Requests_request(method, url as String, args as Object)
     rc = Requests_cache(method, url, headers)
 
     response = invalid
-    if _useCache <> invalid
+    if rc <> invalid and _useCache
         response = rc.get(_cacheSeconds)
     end if
 
     if response = invalid
         response = Requests_run(method, url, headers, data, _timeout, _retryCount, _verify)
-        if rc <> invalid and _useCache <> invalid
+        if rc <> invalid and _useCache
             rc.put(response)
         end if
     end if

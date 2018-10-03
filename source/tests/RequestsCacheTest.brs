@@ -99,7 +99,7 @@ function Atst__Test_Requests_cache_file_bad_json() as void
     timestamp = date.AsSeconds()
     m.assertTrue(WriteAsciiFile(m.cache.location,  stri(timestamp) + chr(10) + "not json data"))
     m.assertInvalid(m.cache.get(60))
-    m.assertTrue(m.cache.delete())
+    m.cache.delete()
 
 end function
 
@@ -108,7 +108,7 @@ function Atst__Test_Requests_cache_expired() as void
 
     m.assertTrue(m.cache.put({"test":"ing"}))
     m.assertInvalid(m.cache.get(-1))
-    m.assertTrue(m.cache.delete())
+    m.cache.delete()
 
 end function
 
@@ -119,6 +119,6 @@ function Atst__Test_Requests_cache_sleep() as void
     m.assertNotInvalid(m.cache.get(2))
     sleep(3000)
     m.assertInvalid(m.cache.get(2))
-    m.assertTrue(m.cache.delete())
+    m.cache.delete()
 
 end function

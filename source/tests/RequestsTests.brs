@@ -109,7 +109,6 @@ function Atst__post_json_data(jsonData) as void
 
 end function
 
-'@Only
 '@Test Requests Cache write, read with Cache-Contol headers
 function Atst__Test_Requests_cache_read_headers() as void
     url = "http://httpbin.org/cache/100"

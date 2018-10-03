@@ -40,7 +40,7 @@ function Requests_cache(method as String, url as String, headers as Object)
                             nowTimestamp = date.AsSeconds()
                             response = ParseJson(dataSplit[1])
                             if response <> invalid
-                                if expireSeconds = invalid
+                                if expireSeconds = invalid and response.headers <> invalid
                                     cacheControl = response.headers["cache-control"]
                                     if cacheControl <> invalid
                                         cacheControlSplit = cacheControl.split(",")
