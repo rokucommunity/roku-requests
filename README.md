@@ -164,7 +164,9 @@ Brightscript Debugger> true
 ```
 
 If the server does not return `cache-control` headers or you want to manually specify the time to cache a request just pass the `cacheSeconds` parameter (int) to Requests.
-`Brightscript Debugger> r = Requests().get("https://httpbin.org/get", {"useCache":true, "cacheSeconds":300})`
+```
+Brightscript Debugger> r = Requests().get("https://httpbin.org/get", {"useCache":true, "cacheSeconds":300})
+```
 
 #### Notes about Cache implementation
 
