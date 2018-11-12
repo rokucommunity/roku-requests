@@ -37,7 +37,8 @@ What about the other HTTP request types: PUT, DELETE, HEAD and OPTIONS? These ar
 ```Brightscript Debugger> r = Requests().request("PUT", "https://httpbin.org/put", {"key":"value"})
 Brightscript Debugger> r = Requests().request("DELETE", "https://httpbin.org/delete", {})
 Brightscript Debugger> r = Requests().request("HEAD", "https://httpbin.org/get", {})
-Brightscript Debugger> r = Requests().request("OPTIONS", "https://httpbin.org/get", {})```
+Brightscript Debugger> r = Requests().request("OPTIONS", "https://httpbin.org/get", {})
+```
 
 ### Passing Parameters In URLs
 
