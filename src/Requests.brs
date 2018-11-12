@@ -216,7 +216,7 @@ function Requests_run(method, url, headers, data, timeout, retryCount, verify)
                 else
                     'We timed out so we should cancel the request
                     ? "[http] Event Timed Out"
-                    m.urlTransfer.AsyncCancel()
+                    urlTransfer.AsyncCancel()
                     'Exponential backoff timeouts
                     timeout = timeout * 2
                     ? "[http] Timeout=", timeout

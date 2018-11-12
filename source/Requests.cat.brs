@@ -159,7 +159,7 @@ function Requests_run(method, url, headers, data, timeout, retryCount, verify)
                     exit while
                 else
                     ? "[http] Event Timed Out"
-                    m.urlTransfer.AsyncCancel()
+                    urlTransfer.AsyncCancel()
                     timeout = timeout * 2
                     ? "[http] Timeout=", timeout
                 end if
