@@ -18,7 +18,9 @@ You might want to help! Get in touch via the slack group, or raise issues.
 ### Make a Request
 
 Making a request with Requests is very simple.
-`Brightscript Debugger> r = Requests().get("https://api.github.com/events")`
+```
+Brightscript Debugger> r = Requests().get("https://api.github.com/events")
+```
 
 Now, we have a Response object called r. We can get all the information we need from this object.
 
@@ -31,7 +33,9 @@ Brightscript Debugger>  200
 
 Requests’ simple API means that all forms of HTTP request are as obvious. For example, this is how you make an HTTP POST request:
 
-`Brightscript Debugger> r = Requests().post("https://httpbin.org/post", {"data":"value"})`
+```
+Brightscript Debugger> r = Requests().post("https://httpbin.org/post", {"data":"value"})
+```
 
 What about the other HTTP request types: PUT, DELETE, HEAD and OPTIONS? These are all supported and simple by using the `.request(VERB...` method:
 
@@ -145,7 +149,9 @@ Brightscript Debugger> <Component: roAssociativeArray> =
 ### Caching
 
 You can tell Requests to use cache (on by default) by passing the `useCache` parameter (boolean). This will automatically cache the request if there are `cache-control` headers in the response.
-`Brightscript Debugger> r = Requests().get("https://httpbin.org/cache/60", {"useCache":true})`
+```
+Brightscript Debugger> r = Requests().get("https://httpbin.org/cache/60", {"useCache":true})
+```
 
 You can see if the cache was hit by checking the `cacheHit` value on the Response object.
 ```
