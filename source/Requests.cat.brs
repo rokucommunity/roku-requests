@@ -39,7 +39,7 @@ function Requests_request(method, url as String, args as Object)
     _data = invalid
     _json = invalid
     _timeout = 30000
-    _retryCount = 3
+    _retryCount = 0
     _verify = "common:/certs/ca-bundle.crt"
     _useCache = true
     _cacheSeconds = invalid
