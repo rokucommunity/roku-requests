@@ -53,7 +53,7 @@ test: dist remove install
 	echo "Running tests"
 	curl -d '' "http://${ROKU_DEV_TARGET}:8060/keypress/home"
 	curl -d '' "http://${ROKU_DEV_TARGET}:8060/launch/dev?RunTests=true&logLevel=4"
-	#sleep ${TEST_MAX_RUN} | telnet ${ROKU_DEV_TARGET} 8085
+	sleep ${TEST_MAX_RUN} | telnet ${ROKU_DEV_TARGET} 8085
 
 testFailures: remove install
 	echo "Running tests - only showing failures"
