@@ -1,6 +1,7 @@
 function Requests_queryString()
 
     return {
+        _urlTransfer: CreateObject("roUrlTransfer")
         _qs_array: []
         addString: function(params as String)
                 if Requests_Utils_inString("&", params)
@@ -46,9 +47,9 @@ function Requests_queryString()
                 c = 0
                 for each qs in m._qs_array
                     if c = 0
-                        output = qs[0] + "=" + qs[1]
+                        output = qs[0] + "=" + m._urlTransfer.Escape(qs[1])
                     else
-                        output = output + "&" + qs[0] + "=" + qs[1]
+                        output = output + "&" + qs[0] + "=" + m._urlTransfer.Escape(qs[1])
                     end if
                     c += 1
                 end for
