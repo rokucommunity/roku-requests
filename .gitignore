@@ -1,12 +1,4 @@
-.DS_Store
-.buildpath
-.externalToolBuilders
-.project
-.pydevproject
-.settings
-.env
-
-###BrightScript specific
-dist/apps
-out/
-dist/
+node_modules
+out
+dist
+*.tgz
