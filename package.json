@@ -18,7 +18,9 @@
     "url": "git+https://github.com/rokucommunity/roku-requests.git"
   },
   "keywords": [
-    "ropm"
+    "ropm",
+    "roku",
+    "http"
   ],
   "author": "Blake Visin",
   "license": "MIT",
