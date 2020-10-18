@@ -12,7 +12,7 @@
 '@Params["", []]
 function Atst__Test_Requests_QueryString_addString(addString, qs_array) as void
 
-    qs = Requests_queryString()
+    qs = rr_Requests_queryString()
     qs.addString(addString)
     'TODO: fix AssertArrayContainsOnly
     'm.AssertArrayContainsOnly(qs._qs_array, "Array")
@@ -27,7 +27,7 @@ end function
 '@Params["", "", [["", ""]]]
 function Atst__Test_Requests_QueryString_addParamKeyValue(param, key, qs_array) as void
 
-    qs = Requests_queryString()
+    qs = rr_Requests_queryString()
     qs.addParamKeyValue(param, key)
     'TODO: fix AssertArrayContainsOnly
     'm.AssertArrayContainsOnly(qs._qs_array, "Array")
@@ -43,7 +43,7 @@ end function
 '@Params[{"": ""}, [["", ""]]]
 function Atst__Test_Requests_QueryString_addParamsAA(params, qs_array) as void
 
-    qs = Requests_queryString()
+    qs = rr_Requests_queryString()
     qs.addParamsAA(params)
     'TODO: fix AssertArrayContainsOnly
     'm.AssertArrayContainsOnly(qs._qs_array, "Array")
@@ -62,7 +62,7 @@ end function
 '@Params[[], []]
 function Atst__Test_Requests_QueryString_addParamsArray(params, qs_array) as void
 
-    qs = Requests_queryString()
+    qs = rr_Requests_queryString()
     qs.addParamsArray(params)
     'TODO: fix AssertArrayContainsOnly
     'm.AssertArrayContainsOnly(qs._qs_array, "Array")
@@ -73,7 +73,7 @@ end function
 '@Test build
 function Atst__Test_Requests_QueryString_build() as void
 
-    qs = Requests_queryString()
+    qs = rr_Requests_queryString()
     qs.addString("test=123&foo=bar")
     qs.addParamKeyValue("name", "jim")
     qs.addParamsAA({"forcast": "sunny"})
@@ -87,7 +87,7 @@ end function
 '@Test build
 function Atst__Test_Requests_QueryString_append() as void
 
-    qs = Requests_queryString()
+    qs = rr_Requests_queryString()
     qs.addString("test=123&foo=bar")
     qs.addParamKeyValue("name", "jim")
     qs.addParamsAA({"forcast": "sunny"})
@@ -107,7 +107,7 @@ end function
 '@Test build empty
 function Atst__Test_Requests_QueryString_append_empty() as void
 
-    qs = Requests_queryString()
+    qs = rr_Requests_queryString()
     append = qs.append("google.com")
     m.AssertEqual(append, "google.com")
 

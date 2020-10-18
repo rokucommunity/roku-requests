@@ -12,7 +12,7 @@
 '@Params["4", "12345"]
 function Atst__Test_Requests_Utils_inString_true(char, strValue) as void
 
-    rtn = Requests_Utils_inString(char, strValue)
+    rtn = rr_Requests_Utils_inString(char, strValue)
     m.AssertTrue(rtn)
 
 end function
@@ -24,7 +24,7 @@ end function
 '@Params["a", "12345"]
 function Atst__Test_Requests_Utils_inString_false(char, strValue) as void
 
-    rtn = Requests_Utils_inString(char, strValue)
+    rtn = rr_Requests_Utils_inString(char, strValue)
     m.AssertFalse(rtn)
 
 end function

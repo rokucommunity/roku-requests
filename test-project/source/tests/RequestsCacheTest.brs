@@ -11,7 +11,7 @@
 '@Params["DELETE"]
 function Atst__Test_Requests_cache_post(method) as void
 
-    m.cache = Requests_cache(method, "", {})
+    m.cache = rr_Requests_cache(method, "", {})
     m.AssertInvalid(m.cache)
 
 end function
@@ -23,7 +23,7 @@ end function
 
 '@BeforeEach
 function Atst__Test_Requests_cache_BeforeEach() as void
-    m.cache = Requests_cache("GET", "google.com", {"foo": "bar"})
+    m.cache = rr_Requests_cache("GET", "google.com", {"foo": "bar"})
 end function
 
 '@AfterEach

@@ -8,7 +8,7 @@
 '@Params["http://httpbin.org/get"]
 function Atst__url_match(url) as void
 
-    response = Requests().get(url)
+    response = rr_Requests().get(url)
     m.AssertEqual(response.url, url)
 
 end function
@@ -22,7 +22,7 @@ end function
 '@Params["http://httpbin.org/status/404", 404]
 function Atst__status_code_match(url, statusCode) as void
 
-    response = Requests().get(url, {retryCount:0})
+    response = rr_Requests().get(url, {retryCount:0})
     m.AssertEqual(response.statusCode, statusCode)
 
 end function
@@ -33,7 +33,7 @@ end function
 '@Params["http://httpbin.org/status/401", 4]
 function Atst__status_code_fail(url, retryCount) as void
 
-    response = Requests().get(url, {retryCount:retryCount})
+    response = rr_Requests().get(url, {retryCount:retryCount})
     m.AssertEqual(response.timesTried, retryCount + 1)
 
 end function
@@ -42,7 +42,7 @@ end function
 '@Params["http://httpbin.org/status/400", -1]
 function Atst__negative_retry(url, retryCount) as void
 
-    response = Requests().get(url, {retryCount:retryCount})
+    response = rr_Requests().get(url, {retryCount:retryCount})
     m.AssertEqual(response.timesTried, retryCount + 1)
     m.AssertEqual(response.statusCode, invalid)
 
@@ -52,7 +52,7 @@ end function
 '@Params["http://httpbin.org/json"]
 function Atst__json_response(url) as void
 
-    response = Requests().get(url)
+    response = rr_Requests().get(url)
     m.AssertNotInvalid(response.json)
     m.AssertAAHasKey(response.json, "slideshow")
 
@@ -62,7 +62,7 @@ end function
 '@Params["http://httpbin.org/get", {"a": "test", "this": "is"}, "http://httpbin.org/get?a=test&this=is"]
 function Atst__json_qs(url, params, finalUrl) as void
 
-    response = Requests().get(url, {"params": params})
+    response = rr_Requests().get(url, {"params": params})
     m.AssertNotInvalid(response.json)
     m.AssertAAContainsSubset(response.json.args, params)
     m.AssertEqual(response.url, finalUrl)
@@ -73,7 +73,7 @@ end function
 '@Params["http://httpbin.org/get", {"testHeaderKey": "testHeaderValue"}]
 function Atst__json_Headers(url, headers) as void
 
-    response = Requests().get(url, {"headers": headers})
+    response = rr_Requests().get(url, {"headers": headers})
     m.AssertNotInvalid(response.json)
     m.AssertAAContainsSubset(response.json.headers, params)
 
@@ -83,7 +83,7 @@ end function
 '@Params["http://httpbin.org/absolute-redirect/5"]
 function Atst___Redirects(url) as void
 
-    response = Requests().get(url)
+    response = rr_Requests().get(url)
     m.AssertNotInvalid(response.json)
     m.AssertEqual(response.json.url, "http://httpbin.org/get")
 
@@ -92,7 +92,7 @@ end function
 '@Test POST form data
 function Atst__post_form_data() as void
 
-    response = Requests().post("http://httpbin.org/post", {"data": "test=data"})
+    response = rr_Requests().post("http://httpbin.org/post", {"data": "test=data"})
     m.AssertNotInvalid(response.json)
     m.AssertAAContainsSubset(response.json.form, {"test": "data"})
 
@@ -103,7 +103,7 @@ end function
 '@Params[{"test":1, "foo":"bar"}]
 function Atst__post_json_data(jsonData) as void
 
-    response = Requests().post("http://httpbin.org/post", {"json": jsonData})
+    response = rr_Requests().post("http://httpbin.org/post", {"json": jsonData})
     m.AssertNotInvalid(response.json)
     m.AssertAAContainsSubset(response.json.json, jsonData)
 
@@ -113,14 +113,14 @@ end function
 function Atst__Test_Requests_cache_read_headers() as void
     url = "http://httpbin.org/cache/100"
 
-    cache = Requests_cache("GET", url, {})
+    cache = rr_Requests_cache("GET", url, {})
     cache.delete()
 
-    response = Requests().get(url, {useCache: true})
+    response = rr_Requests().get(url, {useCache: true})
     m.AssertNotInvalid(response.json)
     m.AssertFalse(response.cacheHit)
 
-    response = Requests().get("http://httpbin.org/cache/100", {useCache: true})
+    response = rr_Requests().get("http://httpbin.org/cache/100", {useCache: true})
     m.AssertNotInvalid(response.json)
     m.AssertTrue(response.cacheHit)
 
