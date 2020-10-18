@@ -27,5 +27,8 @@
   "bugs": {
     "url": "https://github.com/rokucommunity/roku-requests/issues"
   },
-  "homepage": "https://github.com/rokucommunity/roku-requests#readme"
+  "homepage": "https://github.com/rokucommunity/roku-requests#readme",
+  "ropm": {
+    "packageRootDir": "src"
+  }
 }

@@ -1,17 +1,16 @@
-<h3 align="center">
-Simple, python requests inspired, Brightscript requests framework for ROKU apps
-</h3>
+# roku-requests
+Simple, python requests inspired Brightscript requests framework for Roku apps
 
+![build](https://github.com/rokucommunity/roku-requests/workflows/build/badge.svg)
+[![NPM Version](https://badge.fury.io/js/roku-requests.svg?style=flat)](https://npmjs.org/package/roku-requests)
 
-## Links
-
-
-
-## Development
-
-Roku Requests is an independent open-source project, maintained exclusively by volunteers.
-
-You might want to help! Get in touch via the slack group, or raise issues.
+## Installation
+### Using ropm
+```bash
+ropm install roku-requests
+```
+### Manually
+Copy `src/source/Requests.brs` into your project as `source/Requests.brs` folder
 
 ## Usage
 
@@ -181,13 +180,8 @@ Cache Keys and Storage Location
 * The cache data is stored as a file with the first line as a unix epoch of the time the file was written (time the first request was made).  Subsequient requests read the file and compute/compare timestamps to determine if the cached file is still valid or not.
 
 
+## Development
 
+Roku Requests is an independent open-source project, maintained exclusively by volunteers.
 
-
-
-
-
-
-
-
-
+You might want to help! Get in touch via the slack group, or raise issues.

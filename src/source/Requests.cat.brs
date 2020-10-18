@@ -1,25 +1,14 @@
-' VERSION: Requests 0.1.0
-' LICENSE: MIT License
-' LICENSE: 
-' LICENSE: Copyright (c) 2018 Blake Visin
-' LICENSE: 
-' LICENSE: Permission is hereby granted, free of charge, to any person obtaining a copy
-' LICENSE: of this software and associated documentation files (the "Software"), to deal
-' LICENSE: in the Software without restriction, including without limitation the rights
-' LICENSE: to use, copy, modify, merge, publish, distribute, sublicense, and/or sell
-' LICENSE: copies of the Software, and to permit persons to whom the Software is
-' LICENSE: furnished to do so, subject to the following conditions:
-' LICENSE: 
-' LICENSE: The above copyright notice and this permission notice shall be included in all
-' LICENSE: copies or substantial portions of the Software.
-' LICENSE: 
-' LICENSE: THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR
-' LICENSE: IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF MERCHANTABILITY,
-' LICENSE: FITNESS FOR A PARTICULAR PURPOSE AND NONINFRINGEMENT. IN NO EVENT SHALL THE
-' LICENSE: AUTHORS OR COPYRIGHT HOLDERS BE LIABLE FOR ANY CLAIM, DAMAGES OR OTHER
-' LICENSE: LIABILITY, WHETHER IN AN ACTION OF CONTRACT, TORT OR OTHERWISE, ARISING FROM,
-' LICENSE: OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE
-' LICENSE: SOFTWARE.
+' /**
+'  * @module requests
+'  */
+
+' /**
+'  * @memberof module:requests
+'  * @name Requests
+'  * @function
+'  * @description Main Class for Requests
+'  * @param {Dynamic} args - Associative array of args to pass into Alacrity
+
 function Requests() as Object
     return {
         request : Requests_request
@@ -27,22 +16,29 @@ function Requests() as Object
         post: Requests_postRequest
     }
 end function
+
 function Requests_getRequest(url as String, args=invalid)
     return m.request("GET", url, args)
 end function
+
 function Requests_postRequest(url as String, args=invalid)
     return m.request("POST", url, args)
 end function
+
 function Requests_request(method, url as String, args as Object)
+
     _params = {}
     _headers = {}
+    ' _cookies = invalid
     _data = invalid
     _json = invalid
     _timeout = 30000
     _retryCount = 0
+    ' _allow_redirects = true
     _verify = "common:/certs/ca-bundle.crt"
     _useCache = true
     _cacheSeconds = invalid
+
     if args <> invalid and type(args) = "roAssociativeArray"
         if args.params <> invalid and type(args.params) = "roAssociativeArray"
             _params = args.params
@@ -72,10 +68,36 @@ function Requests_request(method, url as String, args as Object)
             _cacheSeconds = args.cacheSeconds
         end if
     end if
+
+    ' Constructs and sends a Request.
+    ' :param method: method for the new Request object.
+    ' :param url: URL for the new Request object.
+    ' :param params: (optional) AA to append as a query string to the Request.
+    ' :param data: (optional) String to send in the body of the Request.
+    ' :param json: (optional) A JSON serializable object to send in the body of the Request.
+    ' :param headers: (optional) AA of HTTP Headers to send with the Request.
+    ' :param cookies: (optional) Dict or CookieJar object to send with the Request.
+    ' :param timeout: (optional) How many seconds to wait for the server to send data
+    '     before giving up, as a float
+    ' :param retryCount: (optional) How many times to retry a failed response.
+    ' :param allow_redirects: (optional) Boolean. Enable/disable GET/OPTIONS/POST/PUT/PATCH/DELETE/HEAD redirection.
+    ' :param verify: (optional) String to specify SSL cert bundle.
+    '               If this is set to empty string `InitClientCertificates` is not called on roUrlTransfer.
+    '               Defaults to `common:/certs/ca-bundle.crt`
+    ' :param useCache: (optional) Boolean. Enable/Disable caching. Defaults to true
+    ' :param cacheSeconds: (optional) Integer. Enable/Disable caching. Defaults to response's Cache-Control if it exists
+    ' :return: :class:`Requests <Response>` object
+    ' Usage::
+    '   req = Requests().get('http://httpbin.org/get')
+
+
     requestHeaders = Requests_headers()
     requestHeaders.addHeadersAA(_headers)
+
     requestQueryString = Requests_queryString()
     requestQueryString.addParamsAA(_params)
+
+    ' Setup the data (we overwrite JSON if it's provided)
     if _data <> invalid
         data = _data
     else if _json <> invalid
@@ -84,37 +106,61 @@ function Requests_request(method, url as String, args as Object)
     else
         data = ""
     end if
+
+    'TODO: Add Cookies Support
+    'urlTransfer.EnableCookies()
+    'urlTransfer.GetCookies(domain, path)
+    'urlTransfer.AddCookies(cookies)
+    'urlTransfer.ClearCookies()
+
     url = requestQueryString.append(url)
     headers = requestHeaders._headers
+
     rc = Requests_cache(method, url, headers)
+
     response = invalid
     if rc <> invalid and _useCache
         response = rc.get(_cacheSeconds)
     end if
+
     if response = invalid
         response = Requests_run(method, url, headers, data, _timeout, _retryCount, _verify)
         if rc <> invalid and _useCache
             rc.put(response)
         end if
     end if
+
     return response
+
 end function
+
 function Requests_run(method, url, headers, data, timeout, retryCount, verify)
+
     urlTransfer = RequestsUrlTransfer(true, true, verify)
     urlTransfer.setUrl(url)
     urlTransfer.SetHeaders(headers)
+
     ? "[http] ------ START HTTP REQUEST ------"
+
     ? "[http] URL:", urlTransfer.GetURL()
+
     ? "[http] Timeout= ", timeout
+
     ? "[http] Headers: ",  headers
+
     cancel_and_return = false
+
     responseEvent = invalid
     requestDetails = {
         timesTried : 0,
     }
+    'while we still have try times
     while retryCount >= 0
+
+        'deincrement the number of retries
         retryCount = retryCount - 1
         requestDetails.timesTried = requestDetails.timesTried + 1
+
         ? "[http] Method: ",  method
         if method="POST"
             sent = urlTransfer.AsyncPostFromString(data)
@@ -123,33 +169,43 @@ function Requests_run(method, url, headers, data, timeout, retryCount, verify)
         else if method = "HEAD"
             sent = urlTransfer.AsyncHead()
         else
+            'PUT, PATCH, DELETE
             urlTransfer.SetRequest(method)
             sent = urlTransfer.AsyncPostFromString(data)
         end if
+
         if sent = true
             clock = CreateObject("roTimespan")
             timeout_call = clock.TotalMilliseconds() + timeout
+
             while true and cancel_and_return = false
+
                 if m.top <> invalid
                     if m.top.quit <> invalid
                         cancel_and_return = m.top.quit
                     end if
                 end if
+
                 event = urlTransfer.GetPort().GetMessage()
+
                 if type(event) = "roUrlEvent"
                     exit while
                 end if
+
                 if clock.TotalMilliseconds() > timeout_call
                     exit while
                 end if
             end while
+
             if type(event) = "roUrlEvent"
                 responseEvent = event
                 responseCode = event.GetResponseCode()
                 ? "[http] Response Code", responseCode
                 if responseCode > 0 and responseCode < 400
+                    'Response was good, so we break the while
                     exit while
                 else
+                    'We have a bad response
                     ? "[http] Bad response", responseCode
                     ? "[http] Will Retry ", retryCount
                 end if
@@ -158,8 +214,10 @@ function Requests_run(method, url, headers, data, timeout, retryCount, verify)
                     ? "[http] Killing the Task"
                     exit while
                 else
+                    'We timed out so we should cancel the request
                     ? "[http] Event Timed Out"
                     urlTransfer.AsyncCancel()
+                    'Exponential backoff timeouts
                     timeout = timeout * 2
                     ? "[http] Timeout=", timeout
                 end if
@@ -167,31 +225,44 @@ function Requests_run(method, url, headers, data, timeout, retryCount, verify)
         end if
     end while
     ? "[http] ------ END HTTP REQUEST ------"
+
     return Requests_response(urlTransfer, responseEvent, requestDetails)
+
 end function
+
+
+
 function Requests_cache(method as String, url as String, headers as Object)
+
     if method <> "GET"
         return invalid
     end if
+
     cacheKey = url
     headersString = FormatJson(headers)
     if headersString <> invalid
         cacheKey = cacheKey + headersString
     end if
+
     ba = CreateObject("roByteArray")
     ba.FromAsciiString(cacheKey)
     digest = CreateObject("roEVPDigest")
     digest.Setup("md5")
     md5Key = digest.Process(ba)
+
     fileLocation = "cachefs:/" + md5Key
+
     return {
         _cacheKey: cacheKey
         _md5Key: md5Key
+
         location: fileLocation
+
         exists: function() as Boolean
                 fs = CreateObject("roFileSystem")
                 return fs.Exists(m.location)
             end function
+
         get: function(expireSeconds) as Object
                 if m.exists()
                     fileData = ReadAsciiFile(m.location)
@@ -227,37 +298,49 @@ function Requests_cache(method as String, url as String, headers as Object)
                 end if
                 return invalid
             end function
+
         put: function(response) as Boolean
                 date = CreateObject("roDateTime")
                 timestamp = date.AsSeconds()
                 putString = stri(timestamp) + chr(10)
                 jsonResponse = FormatJson(response)
+
                 if jsonResponse <> invalid
                     putString = putString + jsonResponse
                     return WriteAsciiFile(m.location, putString)
                 end if
                 return false
             end function
+
         delete: function() as Boolean
             fs = CreateObject("roFileSystem")
                 return fs.Delete(m.location)
             end function
+
     }
+
 end function
+
 function Requests_headers()
+
     return {
         _headers: {}
         addHeader: function(key as String, value as String)
                 m._headers[key] = value
             end function
+
         addHeadersAA: function(headers as Object)
                 m._headers.Append(headers)
             end function
+
         build: m.get
         get: m._headers
     }
+
 end function
+
 function Requests_queryString()
+
     return {
         _urlTransfer: CreateObject("roUrlTransfer")
         _qs_array: []
@@ -298,7 +381,9 @@ function Requests_queryString()
                     end for
                 end if
             end function
+
         build: function() as String
+            ' "build the QS output from the added params"
                 output = ""
                 c = 0
                 for each qs in m._qs_array
@@ -311,7 +396,9 @@ function Requests_queryString()
                 end for
                 return output
             end function
+
         append: function(url as String) as String
+            ' "append the QS on a provided URL"
                 if m._qs_array.Count() > 0
                     if Requests_Utils_inString("?", url)
                         if url.right(1) = "?"
@@ -326,18 +413,24 @@ function Requests_queryString()
                 return url
             end function
     }
+
 end function
+
 function Requests_response(urlTransfer as Object, responseEvent as Object, requestDetails as Object)
+
     rr = {}
+
     rr.timesTried = requestDetails.timesTried
     rr.url = urlTransfer.GetUrl()
     rr.ok = false
     rr.cacheHit = false
+
     if responseEvent <> invalid
         rr.statusCode = responseEvent.GetResponseCode()
         rr.text = responseEvent.GetString()
         rr.headers = responseEvent.GetResponseHeaders()
         rr.headersArray = responseEvent.GetResponseHeadersArray()
+
         rr.GetSourceIdentity = responseEvent.GetSourceIdentity()
         rr.GetFailureReason = responseEvent.GetFailureReason()
         rr.target_ip = responseEvent.GetTargetIpAddress()
@@ -345,28 +438,42 @@ function Requests_response(urlTransfer as Object, responseEvent as Object, reque
             rr.ok = true
         end if
     end if
+
+
+
     if rr.text <> invalid
         rr.json = parseJson(rr.text)
         rr.body = rr.text
     end if
+
     return rr
+
 end function
+
+
 function RequestsUrlTransfer(EnableEncodings as Boolean, retainBodyOnError as Boolean, verify as String)
+
     _urlTransfer = CreateObject("roUrlTransfer")
     _urlTransfer.SetPort(CreateObject("roMessagePort"))
+
      _urlTransfer.EnableEncodings(enableEncodings)
      _urlTransfer.RetainBodyOnError(retainBodyOnError)
     if verify <> ""
         _urlTransfer.SetCertificatesFile(verify)
         _urlTransfer.InitClientCertificates()
     end if
+
     return _urlTransfer
+
 end function
 function Requests_Utils_inString(char as String, strValue as String)
+
     for each single_char in strValue.split("")
         if single_char = char
             return true
         end if
     end for
+
     return false
+
 end function
