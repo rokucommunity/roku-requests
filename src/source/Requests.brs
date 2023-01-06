@@ -443,7 +443,8 @@ function Requests_response(urlTransfer as Object, responseEvent as Object, reque
 
     if rr.text <> invalid
         rr.body = rr.text
-        if rr.headers["Content-Type"] = "application/json"
+        contentType = rr.headers["Content-Type"]
+        if contentType <> invalid and contentType.InStr("application/json") <> -1
             rr.json = parseJson(rr.text)
         end if
     end if
