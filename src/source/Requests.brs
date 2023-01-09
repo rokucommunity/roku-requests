@@ -439,8 +439,6 @@ function Requests_response(urlTransfer as Object, responseEvent as Object, reque
         end if
     end if
 
-
-
     if rr.text <> invalid
         rr.body = rr.text
         contentType = rr.headers.LookupCI("Content-Type")
