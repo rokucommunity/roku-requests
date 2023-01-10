@@ -38,6 +38,8 @@ function Requests_request(method, url as String, args as Object)
     _verify = "common:/certs/ca-bundle.crt"
     _useCache = true
     _cacheSeconds = invalid
+    _parseJson = true
+    _parseJsonFlags = ""
 
     if args <> invalid and type(args) = "roAssociativeArray"
         if args.params <> invalid and type(args.params) = "roAssociativeArray"
@@ -67,6 +69,12 @@ function Requests_request(method, url as String, args as Object)
         if args.cacheSeconds <> invalid and (type(args.cacheSeconds) = "Integer" or type(args.cacheSeconds) = "roInteger")
             _cacheSeconds = args.cacheSeconds
         end if
+        if args.parseJson <> invalid and (type(args.parseJson) = "Boolean" or type(args.parseJson) = "roBoolean")
+            _parseJson = args.parseJson
+        end if
+        if args.parseJsonFlags <> invalid and (type(args.parseJsonFlags) = "String" or type(args.parseJsonFlags) = "roString")
+            _parseJsonFlags = args.parseJsonFlags
+        end if
     end if
 
     ' Constructs and sends a Request.
@@ -86,6 +94,8 @@ function Requests_request(method, url as String, args as Object)
     '               Defaults to `common:/certs/ca-bundle.crt`
     ' :param useCache: (optional) Boolean. Enable/Disable caching. Defaults to true
     ' :param cacheSeconds: (optional) Integer. Enable/Disable caching. Defaults to response's Cache-Control if it exists
+    ' :param parseJson: (optional) Boolean. Enable/Disable parsing json response. Defaults to true
+    ' :param parseJsonFlags: (optional) String. Flags passed to ParseJson() function
     ' :return: :class:`Requests <Response>` object
     ' Usage::
     '   req = Requests().get('http://httpbin.org/get')
@@ -124,7 +134,7 @@ function Requests_request(method, url as String, args as Object)
     end if
 
     if response = invalid
-        response = Requests_run(method, url, headers, data, _timeout, _retryCount, _verify)
+        response = Requests_run(method, url, headers, data, _timeout, _retryCount, _verify, _parseJson, _parseJsonFlags)
         if rc <> invalid and _useCache
             rc.put(response)
         end if
@@ -134,7 +144,7 @@ function Requests_request(method, url as String, args as Object)
 
 end function
 
-function Requests_run(method, url, headers, data, timeout, retryCount, verify)
+function Requests_run(method, url, headers, data, timeout, retryCount, verify, parseJson, parseJsonFlags)
 
     urlTransfer = RequestsUrlTransfer(true, true, verify)
     urlTransfer.setUrl(url)
@@ -153,6 +163,8 @@ function Requests_run(method, url, headers, data, timeout, retryCount, verify)
     responseEvent = invalid
     requestDetails = {
         timesTried : 0,
+        parseJson : parseJson,
+        parseJsonFlags: parseJsonFlags,
     }
     'while we still have try times
     while retryCount >= 0
@@ -440,7 +452,9 @@ function Requests_response(urlTransfer as Object, responseEvent as Object, reque
     end if
 
     if rr.text <> invalid
-        rr.json = parseJson(rr.text)
+        if requestDetails.parseJson = true
+            rr.json = parseJson(rr.text, requestDetails.parseJsonFlags)
+        end if
         rr.body = rr.text
     end if
 
