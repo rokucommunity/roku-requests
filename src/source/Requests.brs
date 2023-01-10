@@ -440,10 +440,8 @@ function Requests_response(urlTransfer as Object, responseEvent as Object, reque
     end if
 
     if rr.text <> invalid
+        rr.json = parseJson(rr.text)
         rr.body = rr.text
-        if rr.headers["Content-Type"] = "application/json"
-            rr.json = parseJson(rr.text)
-        end if
     end if
 
     return rr
