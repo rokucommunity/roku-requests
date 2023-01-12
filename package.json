@@ -1,6 +1,6 @@
 {
   "name": "roku-requests",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "BrightScript http framework for Roku apps, inspired by Pyton Requests",
   "main": "index.js",
   "scripts": {
