@@ -86,17 +86,15 @@ Brightscript Debugger> <Component: roArray> =
 ]
 ```
 
-You also also pass flags for json parsing, or disable json parsing
+You also also pass flags for json parsing. `parseJsonFlags` is passed to the [ParseJson()](https://developer.roku.com/en-ca/docs/references/brightscript/language/global-utility-functions.md#parsejsonjsonstring-as-string-flags---as-string-as-object) function.
 ```
-' parseJsonFlags is passed to the ParseJson() function
 Brightscript Debugger> r = Requests().get("https://api.github.com/events", {parseJsonFlags:"i"})
-' the json object is case insensitive
 Brightscript Debugger> ?r.json
 ```
+Or disable json parsing
 ```
 Brightscript Debugger> r = Requests().get("https://api.github.com/events", {parseJson:false})
 Brightscript Debugger> ?r.json
-Brightscript Debugger> invalid
 ```
 ### Custom Headers
 
