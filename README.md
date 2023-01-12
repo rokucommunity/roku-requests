@@ -76,7 +76,7 @@ Brightscript Debugger> [{"id":"8575373301","type":"WatchEvent","actor":{"id":453
 
 There’s also a builtin JSON encoder/decoder, in case you’re dealing with JSON data:
 ```
-Brightscript Debugger> r = Requests().get("https://api.github.com/events")`
+Brightscript Debugger> r = Requests().get("https://api.github.com/events")
 Brightscript Debugger> ?r.json
 Brightscript Debugger> <Component: roArray> =
 [
@@ -86,6 +86,16 @@ Brightscript Debugger> <Component: roArray> =
 ]
 ```
 
+You also also pass flags for json parsing. `parseJsonFlags` is passed to the [ParseJson()](https://developer.roku.com/en-ca/docs/references/brightscript/language/global-utility-functions.md#parsejsonjsonstring-as-string-flags---as-string-as-object) function.
+```
+Brightscript Debugger> r = Requests().get("https://api.github.com/events", {parseJsonFlags:"i"})
+Brightscript Debugger> ?r.json
+```
+Or disable json parsing
+```
+Brightscript Debugger> r = Requests().get("https://api.github.com/events", {parseJson:false})
+Brightscript Debugger> ?r.json
+```
 ### Custom Headers
 
 If you’d like to add HTTP headers to a request, simply pass in an `AA` to the `headers` key in the args dictionary.
