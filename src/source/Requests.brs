@@ -135,7 +135,7 @@ function Requests_request(method, url as String, args as Object)
 
     if response = invalid
         response = Requests_run(method, url, headers, data, _timeout, _retryCount, _verify, _parseJson, _parseJsonFlags)
-        if rc <> invalid and _useCache
+        if rc <> invalid and _useCache and response.ok = true
             rc.put(response)
         end if
     end if
