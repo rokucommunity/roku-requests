@@ -12,10 +12,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
-### Fixed
-
-- Fix a bug where bad responses would be cached
-
 ## [1.0.0](https://github.com/rokucommunity/roku-requests/compare/v0.2.0...v1.0.0) - 2022-01-12
 ### Changed
  - This project has been in the wild for years even before ropm. Releasing as v1 now that it's clear the ropm-published package is stable.
