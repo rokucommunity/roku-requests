@@ -8,6 +8,7 @@
     "validate": "bsc --create-package=false --copy-to-staging=false"
   },
   "devDependencies": {
+    "@rokucommunity/bslint": "^0.8.1",
     "brighterscript": "^0.61.2"
   },
   "repository": {

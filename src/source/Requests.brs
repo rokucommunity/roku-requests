@@ -11,8 +11,8 @@
 
 function Requests() as Object
     return {
-        request : Requests_request
-        get: Requests_getRequest
+        request : Requests_request,
+        get: Requests_getRequest,
         post: Requests_postRequest
     }
 end function
@@ -164,7 +164,7 @@ function Requests_run(method, url, headers, data, timeout, retryCount, verify, p
     requestDetails = {
         timesTried : 0,
         parseJson : parseJson,
-        parseJsonFlags: parseJsonFlags,
+        parseJsonFlags: parseJsonFlags
     }
     'while we still have try times
     while retryCount >= 0
@@ -172,6 +172,8 @@ function Requests_run(method, url, headers, data, timeout, retryCount, verify, p
         'deincrement the number of retries
         retryCount = retryCount - 1
         requestDetails.timesTried = requestDetails.timesTried + 1
+
+        sent = invalid
 
         ? "[http] Method: ",  method
         if method="POST"
@@ -189,6 +191,8 @@ function Requests_run(method, url, headers, data, timeout, retryCount, verify, p
         if sent = true
             clock = CreateObject("roTimespan")
             timeout_call = clock.TotalMilliseconds() + timeout
+
+            event = invalid
 
             while true and cancel_and_return = false
 
@@ -265,15 +269,15 @@ function Requests_cache(method as String, url as String, headers as Object)
     fileLocation = "cachefs:/" + md5Key
 
     return {
-        _cacheKey: cacheKey
-        _md5Key: md5Key
+        _cacheKey: cacheKey,
+        _md5Key: md5Key,
 
-        location: fileLocation
+        location: fileLocation,
 
         exists: function() as Boolean
                 fs = CreateObject("roFileSystem")
                 return fs.Exists(m.location)
-            end function
+            end function,
 
         get: function(expireSeconds) as Object
                 if m.exists()
@@ -309,7 +313,7 @@ function Requests_cache(method as String, url as String, headers as Object)
                     end if
                 end if
                 return invalid
-            end function
+            end function,
 
         put: function(response) as Boolean
                 date = CreateObject("roDateTime")
@@ -322,7 +326,7 @@ function Requests_cache(method as String, url as String, headers as Object)
                     return WriteAsciiFile(m.location, putString)
                 end if
                 return false
-            end function
+            end function,
 
         delete: function() as Boolean
             fs = CreateObject("roFileSystem")
@@ -336,16 +340,16 @@ end function
 function Requests_headers()
 
     return {
-        _headers: {}
-        addHeader: function(key as String, value as String)
+        _headers: {},
+        addHeader: sub(key as String, value as String)
                 m._headers[key] = value
-            end function
+            end sub,
 
-        addHeadersAA: function(headers as Object)
+        addHeadersAA: sub(headers as Object)
                 m._headers.Append(headers)
-            end function
+            end sub,
 
-        build: m.get
+        build: m.get,
         get: m._headers
     }
 
@@ -354,9 +358,9 @@ end function
 function Requests_queryString()
 
     return {
-        _urlTransfer: CreateObject("roUrlTransfer")
-        _qs_array: []
-        addString: function(params as String)
+        _urlTransfer: CreateObject("roUrlTransfer"),
+        _qs_array: [],
+        addString: sub(params as String)
                 if Requests_Utils_inString("&", params)
                     split_params = params.split("&")
                     for each param in split_params
@@ -373,16 +377,16 @@ function Requests_queryString()
                 else
                     m.addParamKeyValue(params, "")
                 end if
-            end function
-        addParamKeyValue: function(param as String, key as String)
+            end sub,
+        addParamKeyValue: sub(param as String, key as String)
                 m._qs_array.push([param, key])
-            end function
-        addParamsAA: function(params as Object)
+            end sub,
+        addParamsAA: sub(params as Object)
                 for each item in params.Items()
                     m.addParamKeyValue(item.key, item.value)
                 end for
-            end function
-        addParamsArray: function(params as Object)
+            end sub,
+        addParamsArray: sub(params as Object)
                 if params.Count() > 0
                     for each item in params
                         if item.Count() > 1
@@ -392,7 +396,7 @@ function Requests_queryString()
                         end if
                     end for
                 end if
-            end function
+            end sub,
 
         build: function() as String
             ' "build the QS output from the added params"
@@ -407,7 +411,7 @@ function Requests_queryString()
                     c += 1
                 end for
                 return output
-            end function
+            end function,
 
         append: function(url as String) as String
             ' "append the QS on a provided URL"
@@ -463,7 +467,7 @@ function Requests_response(urlTransfer as Object, responseEvent as Object, reque
 end function
 
 
-function RequestsUrlTransfer(EnableEncodings as Boolean, retainBodyOnError as Boolean, verify as String)
+function RequestsUrlTransfer(enableEncodings as Boolean, retainBodyOnError as Boolean, verify as String)
 
     _urlTransfer = CreateObject("roUrlTransfer")
     _urlTransfer.SetPort(CreateObject("roMessagePort"))
