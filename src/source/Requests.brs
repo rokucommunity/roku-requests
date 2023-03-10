@@ -164,7 +164,7 @@ function Requests_run(method, url, headers, data, timeout, retryCount, verify, p
     requestDetails = {
         timesTried : 0,
         parseJson : parseJson,
-        parseJsonFlags: parseJsonFlags,
+        parseJsonFlags: parseJsonFlags
     }
     'while we still have try times
     while retryCount >= 0
