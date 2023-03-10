@@ -1,6 +1,6 @@
 {
   "name": "roku-requests",
-  "version": "0.2.0",
+  "version": "1.1.0",
   "description": "BrightScript http framework for Roku apps, inspired by Pyton Requests",
   "main": "index.js",
   "scripts": {
@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "@rokucommunity/bslint": "^0.7.5",
-    "brighterscript": "^0.60.2"
+    "brighterscript": "^0.61.2"
   },
   "repository": {
     "type": "git",
