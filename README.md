@@ -1,7 +1,7 @@
 # roku-requests
 Simple, python requests inspired Brightscript requests framework for Roku apps
 
-[![build status](https://img.shields.io/github/workflow/status/rokucommunity/roku-requests/build.svg?logo=github)](https://github.com/rokucommunity/roku-requests/actions?query=workflow%3Abuild)
+[![build status](https://img.shields.io/github/actions/workflow/status/rokucommunity/roku-requests/build.yml?logo=github&branch=master)](https://github.com/rokucommunity/roku-requests/actions/workflows/build.yml)
 [![monthly downloads](https://img.shields.io/npm/dm/roku-requests.svg?sanitize=true&logo=npm&logoColor=)](https://npmcharts.com/compare/roku-requests?minimal=true)
 [![npm version](https://img.shields.io/npm/v/roku-requests.svg?logo=npm)](https://www.npmjs.com/package/roku-requests)
 [![license](https://img.shields.io/github/license/rokucommunity/roku-requests.svg)](LICENSE)
