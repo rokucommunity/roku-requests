@@ -200,7 +200,7 @@ Brightscript Debugger> r = Requests().get("https://httpbin.org/get", {"useCache"
 
 Roku's Cachefs:
 
-* The cache implementation uses Roku's `cachefs` (<https://sdkdocs.roku.com/display/sdkdoc/File+System>)
+* The cache implementation uses Roku's `cachefs` (https://sdkdocs.roku.com/display/sdkdoc/File+System)
 * `cachefs` is available as a Beta feature starting in Roku OS 8.
 * `cachefs` exists across channel launches but will evict data when more space is required for another Channel.
 
