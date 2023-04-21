@@ -276,7 +276,10 @@ function Requests_cache(method as String, url as String, headers as Object)
 
         exists: function() as Boolean
                 fs = CreateObject("roFileSystem")
-                return fs.Exists(m.location)
+                if fs <> invalid
+                    return fs.Exists(m.location)
+                end if
+                return false
             end function,
 
         get: function(expireSeconds) as Object
@@ -329,8 +332,11 @@ function Requests_cache(method as String, url as String, headers as Object)
             end function,
 
         delete: function() as Boolean
-            fs = CreateObject("roFileSystem")
-                return fs.Delete(m.location)
+                fs = CreateObject("roFileSystem")
+                if fs <> invalid
+                    return fs.Delete(m.location)
+                end if
+                return false
             end function
 
     }
