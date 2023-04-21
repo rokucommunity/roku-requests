@@ -4,6 +4,6 @@
     "rr": "file:../"
   },
   "devDependencies": {
-    "ropm": "^0.6.3"
+    "ropm": "^0.10.13"
   }
 }
