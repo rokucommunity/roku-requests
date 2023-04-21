@@ -6,6 +6,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 
 
+## [1.2.0](https://github.com/rokucommunity/roku-requests/compare/v1.1.0...v1.2.0) - 2023-04-21
+### Changed
+ - only cache valid response ([#31](https://github.com/rokucommunity/roku-requests/pull/31))
+### Fixed
+ - crash where fs was sometimes invalid ([#36](https://github.com/rokucommunity/roku-requests/pull/36))
+
+
+
 ## [1.1.0](https://github.com/rokucommunity/roku-requests/compare/v1.0.0...v1.1.0) - 2022-01-12
 ### Added
 - Add `parseJson` and `parseJsonFlags` arguments ([#28](https://github.com/rokucommunity/roku-requests/pull/28))
