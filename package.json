@@ -9,7 +9,7 @@
   },
   "devDependencies": {
     "@rokucommunity/bslint": "^0.8.1",
-    "brighterscript": "^0.61.2"
+    "brighterscript": "^0.64.2"
   },
   "repository": {
     "type": "git",
