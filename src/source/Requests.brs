@@ -51,7 +51,7 @@ function Requests_request(method, url as String, args as Object)
         if args.data <> invalid and (type(args.data) = "String" or type(args.data) = "roString")
             _data = args.data
         end if
-        if args.json <> invalid and type(args.json) = "roAssociativeArray"
+        if type(args.json) = "roAssociativeArray" or type(args.json) = "roArray"
             _json = FormatJson(args.json)
         end if
         if args.timeout <> invalid and (type(args.timeout) = "Integer" or type(args.timeout) = "roInteger")
