@@ -462,8 +462,16 @@ function Requests_response(urlTransfer as Object, responseEvent as Object, reque
     end if
 
     if rr.text <> invalid
-        if requestDetails.parseJson = true
-            rr.json = parseJson(rr.text, requestDetails.parseJsonFlags)
+        if requestDetails.parseJson = true and rr.text <> ""
+            ' ParseJson fails when the response is empty or when `BOMChar` is present
+            ' https://stackoverflow.com/questions/61387828/roku-parsejson-gives-unknow-identifier-error-when-loading-json-via-ajax
+            bomChar = Chr(65279)
+            if rr.text.Left(Len(bomChar)) = bomChar
+                filteredText = rr.text.replace(bomChar, "")
+                rr.json = parseJson(filteredText, requestDetails.parseJsonFlags)
+            else
+                rr.json = parseJson(rr.text, requestDetails.parseJsonFlags)
+            end if
         end if
         rr.body = rr.text
     end if
