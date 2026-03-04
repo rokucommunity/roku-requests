@@ -1,0 +1,80 @@
+---
+description: roku-requests project architecture and structure
+alwaysApply: true
+---
+
+# Project Architecture
+
+roku-requests is a BrightScript HTTP library for Roku, modeled after Python's `requests`. It provides a simple API for HTTP requests with query string parameters, custom headers, JSON handling, timeouts, retries, GET response caching, and SSL certificate verification.
+
+## Directory Structure
+
+- `src/source/Requests.brs` — The entire library (single file). Installed via ropm or manual copy.
+- `test-project/` — Embedded test harness and sample Roku channel
+  - `manifest` — Roku channel manifest
+  - `package.json` — Depends on `rr: "file:../"` (local package reference)
+  - `components/TestsScene.xml` — Rooibos test scene
+  - `source/main.brs` — Entry point; initializes Rooibos when `args.RunTests = "true"`
+  - `source/rooibos.cat.brs` — Bundled Rooibos test framework
+  - `source/testConfig.json` — Rooibos configuration
+  - `source/tests/` — Test suites (`RequestsTests.brs`, `RequestsUtilsTests.brs`, `RequestsQueryStringTests.brs`, `RequestsHeadersTests.brs`, `RequestsCacheTest.brs`)
+  - `source/roku_modules/rr/Requests.cat.brs` — ropm-installed copy (functions prefixed `rr_`)
+- `bsconfig.json` — BrighterScript config (rootDir: `src`, bslint plugin)
+- `.github/workflows/build.yml` — CI: validate + npm release on version tags
+
+## Build & Validation
+
+- **Config:** `bsconfig.json` sets `rootDir: "src"` with `@rokucommunity/bslint` plugin.
+- **Validate:** `npm run validate` → `bsc --create-package=false --copy-to-staging=false`
+- **Preversion hook:** `npm run validate` runs automatically before `npm version`.
+
+## Test Infrastructure
+
+- **Framework:** Rooibos (v0.1.0), bundled in `test-project/source/rooibos.cat.brs`
+- **Entry:** `main.brs` calls `Rooibos__Init(args, SetupGlobals, AddTestUtils)` when `args.RunTests = "true"`
+- **Test scene:** `test-project/components/TestsScene.xml`
+- **Suites:**
+  - `RequestsTests.brs` — Integration tests (URL, status codes, retries, JSON, query params, headers, redirects, POST form/json, cache)
+  - `RequestsUtilsTests.brs` — `Requests_Utils_inString` utility
+  - `RequestsQueryStringTests.brs` — Query string building and appending
+  - `RequestsHeadersTests.brs` — Header handling
+  - `RequestsCacheTest.brs` — Cache miss, key/MD5, put/get/delete, expiry, bad data
+
+## Public API
+
+- `Requests()` — Factory returning `{ request, get, post }`
+- `Requests().get(url, args)` — HTTP GET
+- `Requests().post(url, args)` — HTTP POST
+- `Requests().request(method, url, args)` — Generic method (PUT, DELETE, HEAD, OPTIONS)
+
+### Request Options (`args`)
+
+- `params` — Query string AA
+- `headers` — Headers AA
+- `data` — Raw body string
+- `json` — AA serialized as JSON body
+- `timeout` — Milliseconds (default 30000)
+- `retryCount` — Retry count on failure
+- `verify` — SSL cert path (default `common:/certs/ca-bundle.crt`)
+- `useCache` — Enable GET response caching (default true)
+- `cacheSeconds` — Manual cache TTL
+- `parseJson` — Parse response as JSON (default true)
+- `parseJsonFlags` — Flags for `ParseJson()`
+
+### Response Object
+
+- `ok`, `statusCode`, `url`, `text`, `body`, `headers`, `headersArray`
+- `json` — Parsed JSON (when `parseJson` enabled)
+- `cacheHit`, `timesTried`, `timedOut`
+- `GetSourceIdentity`, `GetFailureReason`, `target_ip`
+
+## Installation
+
+**ropm:** `ropm install roku-requests` (functions prefixed `rr_`)
+
+**Manual:** Copy `src/source/Requests.brs` into your project's `source/` directory.
+
+## CI/CD
+
+1. **ci job:** Checkout → Node 16.15.1 → `npm ci` → `npm run validate`
+2. **npm-release job:** On version tags (`refs/tags/v*`) → `npm pack` → GitHub release → `npm publish`

@@ -1,0 +1,288 @@
+---
+description: BrightScript/BrighterScript coding style conventions
+globs: "**/*.brs,**/*.bs"
+alwaysApply: false
+---
+
+# BrightScript / BrighterScript Style Guide
+
+## Lint
+
+The project uses `bslint`. Run `npm run lint` to check. Key rules:
+
+- `inline-if-then`: **never**
+- `block-if-style`: **then**
+- `no-print`: info
+- `no-todo`: info
+- `stop`: warn
+
+## if-then
+
+Always use multi-line `if`/`then`/`end if`. No one-liners. No wrapping conditions in parentheses unless complex AND/OR logic. Add a blank line before and after the block.
+
+```brightscript
+' GOOD
+if a > 2 then
+    doSomethingCool()
+end if
+
+' BAD
+if a > 2 then doSomethingCool()
+```
+
+## Type Annotations
+
+Specify argument and return types. Avoid `as dynamic` when possible. Do not annotate subs with `void`.
+
+```brightscript
+' GOOD
+function somethingNeat(x as integer) as boolean
+    return x % 2
+end function
+
+sub executeSomething()
+    ' no void annotation needed
+end sub
+
+' BAD
+function somethingNeat(x)
+    return x % 2
+end function
+```
+
+## Returns
+
+Combine `return` with the expression when simple. Keep one blank line above `return` when preceded by other statements.
+
+```brightscript
+' GOOD — simple
+function isGreater(x as integer) as boolean
+    return x > 2
+end function
+
+' GOOD — blank line before return
+function getSomething(x as integer) as boolean
+    someGlobal = m.someGlobal
+    if someGlobal = invalid then
+        return false
+    end if
+
+    return someGlobal.someBoolean
+end function
+
+' BAD — unnecessary temp variable
+function isGreater(x as integer) as boolean
+    y = x > 2
+    return y
+end function
+```
+
+## Function / Sub Naming
+
+Use camelCase. For intrinsic objects, prefix private functions with `_`. For library-style `.brs` files, prefix with `FileName_` to avoid naming collisions.
+
+```brightscript
+' GOOD — intrinsic object with private function
+function SomeApi() as object
+    obj = {}
+    obj._doesUserExist = function() as boolean
+        return true
+    end function
+    obj.doApiThing = sub()
+        if m._doesUserExist() then
+            ' do something
+        end if
+    end sub
+end function
+
+' GOOD — library file (SomeApi.brs)
+function SomeApi_doesUserExist() as boolean
+    return true
+end function
+
+' BAD — no prefix, risks naming collision
+function doesUserExist() as boolean
+    return true
+end function
+```
+
+## Guard Clauses
+
+Check invalid/missing values early and return before the main logic. Keeps code flat and readable.
+
+```brightscript
+' GOOD
+sub somethingCool(content as object)
+    if content = invalid or content.url = invalid then
+        return
+    end if
+
+    someOtherFunction(content.url)
+end sub
+
+' BAD — no guards, content may be invalid
+sub somethingCool(content as object)
+    someOtherFunction(content.url)
+end sub
+```
+
+## Arithmetic
+
+Keep spaces around operators.
+
+```brightscript
+timeout = someTimeoutMs * 1000
+timeoutMs = someTimeoutSeconds / 1000
+```
+
+## Built-in Casing
+
+Use camelCase forms of built-in functions: `getInterface`, `lookup`, `createObject`, etc.
+
+For Roku component/object methods, use PascalCase as documented in the Roku API: `getFailureReason`, `getMessagePort()`, `setMessagePort()`, etc.
+
+```brightscript
+' GOOD
+iface = getInterface(obj, "ifAssociativeArray")
+reason = r.getFailureReason
+
+' BAD
+iface = GetInterface(obj, "ifAssociativeArray")
+reason = r.getfailurereason
+```
+
+## BrighterScript SG Node Calls
+
+When defining functions called via `@.` (callfunc), always include `params = invalid as dynamic` in the signature. The `@.` operator transpiles to `callFunc(..., invalid)` and omitting the param can cause silent failures.
+
+```brightscript
+' GOOD
+function doSomething(params = invalid as dynamic) as object
+    ' ...
+end function
+
+' BAD — @. calls will silently fail
+function doSomething() as object
+    ' ...
+end function
+```
+
+## Dynamic AA Key Access
+
+Prefer bracket notation `aa[key]` over `aa.lookup(key)` when checking for `invalid` afterward.
+
+```brightscript
+' GOOD
+value = config[key]
+if value <> invalid then
+    ' use value
+end if
+
+' BAD
+value = config.lookup(key)
+if value <> invalid then
+    ' use value
+end if
+```
+
+## Null Safety
+
+Optional chaining (`?.`) works in both `.brs` and `.bs` files. Null coalescing (`??`) is BrighterScript-only and must not appear in `.brs` files.
+
+```brightscript
+' GOOD — optional chaining works in .brs and .bs
+value = m.config?.timeout
+
+' GOOD — plain BrightScript fallback (use in .brs instead of ??)
+timeout = args.timeout
+if timeout = invalid then
+    timeout = m.config?.defaultTimeout
+end if
+
+' GOOD — ?? is fine in .bs files only
+' timeout = args.timeout ?? m.config?.defaultTimeout
+
+' BAD — ?? in a .brs file (will not compile)
+' timeout = args.timeout ?? m.config?.defaultTimeout
+```
+
+## Progressive AA Construction
+
+When multiple branches produce similar associative arrays, build a single AA with the common fields first, then layer conditional fields with dot assignment. Assign the AA once at the end.
+
+```brightscript
+' GOOD — build once, layer conditionally, assign once
+result = {
+    "success": isSuccess,
+    "code": statusCode
+}
+
+if isSuccess then
+    result.body = responseBody
+else
+    result.error = errorMessage
+end if
+
+m.callback = result
+
+' BAD — duplicate AA structures across branches
+if isSuccess then
+    m.callback = {
+        "success": true, "code": statusCode, "body": responseBody
+    }
+else
+    m.callback = {
+        "success": false, "code": statusCode, "error": errorMessage
+    }
+end if
+```
+
+## Resolve-then-Use
+
+When a value has a default that may be overridden by a condition, assign the default first, override in the branch, then use the resolved value once. Avoids duplicating downstream logic.
+
+```brightscript
+' GOOD — resolve, then use once
+timeout = defaultTimeout
+if config.timeout <> invalid then
+    timeout = config.timeout
+end if
+
+request.timeout = timeout
+
+' BAD — duplicates the assignment with different values
+if config.timeout <> invalid then
+    request.timeout = config.timeout
+else
+    request.timeout = defaultTimeout
+end if
+```
+
+## Preprocessor Conditionals
+
+`#if` only accepts bare `bs_const` names, `true`, or `false`. No operators (`not`, `=`, `<>`). To negate a const, use an empty `#if` with `#else`:
+
+```brightscript
+' GOOD — negate via #else
+#if isUnitTest
+#else
+    print "only in non-test builds"
+#end if
+
+' BAD — not supported
+#if not isUnitTest
+    print "only in non-test builds"
+#end if
+```
+
+## roku-requests Response Properties
+
+The `roku-requests` response AA stores results of `roUrlEvent` methods as **string properties**, not callable functions. Access them without parentheses:
+
+```brightscript
+' GOOD
+failureReason = r.getFailureReason
+
+' BAD — runtime error: "Function Call Operator attempted on non-function"
+failureReason = r.getFailureReason()
+```

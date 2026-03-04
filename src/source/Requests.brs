@@ -54,10 +54,10 @@ function Requests_request(method, url as String, args as Object)
         if args.json <> invalid and type(args.json) = "roAssociativeArray"
             _json = FormatJson(args.json)
         end if
-        if args.timeout <> invalid and (type(args.timeout) = "Integer" or type(args.timeout) = "roInteger")
+        if args.timeout <> invalid and (type(args.timeout) = "Integer" or type(args.timeout) = "roInteger" or type(args.timeout) = "roInt")
             _timeout = args.timeout
         end if
-        if args.retryCount <> invalid and (type(args.retryCount) = "Integer" or type(args.retryCount) = "roInteger")
+        if args.retryCount <> invalid and (type(args.retryCount) = "Integer" or type(args.retryCount) = "roInteger" or type(args.retryCount) = "roInt")
             _retryCount = args.retryCount
         end if
         if args.verify <> invalid and (type(args.verify) = "String" or type(args.verify) = "roString")
@@ -66,7 +66,7 @@ function Requests_request(method, url as String, args as Object)
         if args.useCache <> invalid and (type(args.useCache) = "Boolean" or type(args.useCache) = "roBoolean")
             _useCache = args.useCache
         end if
-        if args.cacheSeconds <> invalid and (type(args.cacheSeconds) = "Integer" or type(args.cacheSeconds) = "roInteger")
+        if args.cacheSeconds <> invalid and (type(args.cacheSeconds) = "Integer" or type(args.cacheSeconds) = "roInteger" or type(args.cacheSeconds) = "roInt")
             _cacheSeconds = args.cacheSeconds
         end if
         if args.parseJson <> invalid and (type(args.parseJson) = "Boolean" or type(args.parseJson) = "roBoolean")
@@ -163,15 +163,17 @@ function Requests_run(method, url, headers, data, timeout, retryCount, verify, p
     responseEvent = invalid
     requestDetails = {
         timesTried : 0,
+        timedOut : false,
         parseJson : parseJson,
         parseJsonFlags: parseJsonFlags
     }
     'while we still have try times
     while retryCount >= 0
 
-        'deincrement the number of retries
+        'decrement the number of retries
         retryCount = retryCount - 1
         requestDetails.timesTried = requestDetails.timesTried + 1
+        requestDetails.timedOut = false
 
         sent = invalid
 
@@ -194,6 +196,7 @@ function Requests_run(method, url, headers, data, timeout, retryCount, verify, p
 
             event = invalid
 
+            port = urlTransfer.getPort()
             while true and cancel_and_return = false
 
                 if m.top <> invalid
@@ -202,13 +205,19 @@ function Requests_run(method, url, headers, data, timeout, retryCount, verify, p
                     end if
                 end if
 
-                event = urlTransfer.GetPort().GetMessage()
-
-                if type(event) = "roUrlEvent"
+                remainingMs = timeout_call - clock.totalMilliseconds()
+                if remainingMs <= 0
                     exit while
                 end if
 
-                if clock.TotalMilliseconds() > timeout_call
+                waitMs = remainingMs
+                if waitMs > 500 then
+                    waitMs = 500
+                end if
+
+                event = wait(waitMs, port)
+
+                if type(event) = "roUrlEvent"
                     exit while
                 end if
             end while
@@ -226,16 +235,20 @@ function Requests_run(method, url, headers, data, timeout, retryCount, verify, p
                     ? "[http] Will Retry ", retryCount
                 end if
             else
-                if m.cancel_and_return = true
+                if cancel_and_return = true
                     ? "[http] Killing the Task"
                     exit while
                 else
-                    'We timed out so we should cancel the request
                     ? "[http] Event Timed Out"
+                    requestDetails.timedOut = true
                     urlTransfer.AsyncCancel()
-                    'Exponential backoff timeouts
                     timeout = timeout * 2
                     ? "[http] Timeout=", timeout
+                    ' Create a fresh roUrlTransfer so the next attempt
+                    ' doesn't race with the in-flight cancel.
+                    urlTransfer = RequestsUrlTransfer(true, true, verify)
+                    urlTransfer.setUrl(url)
+                    urlTransfer.setHeaders(headers)
                 end if
             end if
         end if
@@ -443,6 +456,7 @@ function Requests_response(urlTransfer as Object, responseEvent as Object, reque
     rr = {}
 
     rr.timesTried = requestDetails.timesTried
+    rr.timedOut = requestDetails.timedOut
     rr.url = urlTransfer.GetUrl()
     rr.ok = false
     rr.cacheHit = false
@@ -478,8 +492,8 @@ function RequestsUrlTransfer(enableEncodings as Boolean, retainBodyOnError as Bo
     _urlTransfer = CreateObject("roUrlTransfer")
     _urlTransfer.SetPort(CreateObject("roMessagePort"))
 
-     _urlTransfer.EnableEncodings(enableEncodings)
-     _urlTransfer.RetainBodyOnError(retainBodyOnError)
+    _urlTransfer.EnableEncodings(enableEncodings)
+    _urlTransfer.RetainBodyOnError(retainBodyOnError)
     if verify <> ""
         _urlTransfer.SetCertificatesFile(verify)
         _urlTransfer.InitClientCertificates()
